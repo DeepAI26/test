@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from pydub import AudioSegment
+# from pydub import AudioSegment
 import yt_dlp
 import whisper
 from transformers import pipeline, BartForConditionalGeneration, BartTokenizer
@@ -81,7 +81,6 @@ def check_environment():
         print("⚠️  Social media posting will not work without these variables.")
     else:
         print("✅ All environment variables are set!")
-
 
 check_environment()
 
@@ -818,15 +817,4 @@ def scheduled_poster_worker(poll_interval_seconds=30):
 scheduler_thread = threading.Thread(target=scheduled_poster_worker, daemon=True)
 scheduler_thread.start()
 logger.info("✅ Scheduler thread started and running")
-
-# -------------------------------
-# Flask app
-# -------------------------------
-app = Flask(__name__)
-
-# Move the add_flask_route import and call to AFTER all function definitions
-from ai_agent import add_flask_route
-
-add_flask_route(app, video_data, save_video_data, download_audio, transcribe_audio, summarize_text, get_video_details,
-                post_to_telegram, post_to_discord)
 
