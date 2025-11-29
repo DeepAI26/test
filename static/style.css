@@ -1,0 +1,153 @@
+/* ----------------------------------------------------
+   GLOBAL STYLING
+---------------------------------------------------- */
+body {
+    background: linear-gradient(135deg, #e3f2fd, #ede7f6);
+    animation: fadeIn 0.8s ease-in-out;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Smooth fade-in animation */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ----------------------------------------------------
+   CARD EFFECTS
+---------------------------------------------------- */
+.card-hover {
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0px 6px 20px rgba(0,0,0,0.15);
+}
+
+/* ----------------------------------------------------
+   BUTTON ANIMATIONS
+---------------------------------------------------- */
+button {
+    transition: all 0.2s ease-in-out;
+}
+
+button:hover {
+    transform: scale(1.03);
+}
+
+button:active {
+    transform: scale(0.97);
+}
+
+/* Glow effect for primary buttons */
+button.glow:hover {
+    box-shadow: 0 0 10px rgba(59,130,246,0.6);
+}
+
+/* ----------------------------------------------------
+   INPUT FOCUS EFFECTS
+---------------------------------------------------- */
+input[type="url"],
+input[type="text"],
+input[type="datetime-local"],
+textarea {
+    transition: 0.25s;
+}
+
+input:focus, textarea:focus {
+    box-shadow: 0px 0px 8px rgba(99,102,241,0.45);
+    transform: scale(1.01);
+}
+
+/* ----------------------------------------------------
+   SECTION HEADERS
+---------------------------------------------------- */
+.section-title {
+    position: relative;
+    padding-bottom: 8px;
+}
+
+.section-title::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 60px;
+    height: 4px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #3b82f6, #9333ea);
+}
+
+/* ----------------------------------------------------
+   SOCIAL CARD BORDER HIGHLIGHT
+---------------------------------------------------- */
+.border-animated {
+    transition: border-color 0.3s ease-in-out, transform 0.2s;
+}
+
+.border-animated:hover {
+    transform: scale(1.01);
+}
+
+/* ----------------------------------------------------
+   CUSTOM SCROLLBAR
+---------------------------------------------------- */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #4f46e5, #9333ea);
+    border-radius: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #e0e7ff;
+}
+
+/* ----------------------------------------------------
+   MODAL ANIMATION
+---------------------------------------------------- */
+.modal-fade {
+    animation: modalFade 0.35s ease-in-out;
+}
+
+@keyframes modalFade {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* ----------------------------------------------------
+   HIGHLIGHTED PLATFORM TABS
+---------------------------------------------------- */
+.platform-header {
+    transition: background 0.25s, box-shadow 0.25s;
+}
+
+.platform-header:hover {
+    box-shadow: inset 0 0 10px rgba(255,255,255,0.3);
+}
+
+/* ----------------------------------------------------
+   SUMMARY TEXT BLOCK
+---------------------------------------------------- */
+.summary-box {
+    border-left: 5px solid #6366f1;
+    background: #f5f7ff;
+    padding: 12px;
+    border-radius: 6px;
+}
+
+/* ----------------------------------------------------
+   THUMBNAIL HOVER EFFECT
+---------------------------------------------------- */
+.thumbnail {
+    border-radius: 12px;
+    transition: 0.2s ease-in-out;
+}
+
+.thumbnail:hover {
+    transform: scale(1.03);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}

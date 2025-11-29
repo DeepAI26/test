@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - YouTube Summarizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8" x-data="adminApp()">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+                <p class="text-gray-600">YouTube Summarizer Management</p>
+            </div>
+            <div class="flex space-x-4">
+                <a href="/" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                    <i class="fas fa-home mr-2"></i>Main App
+                </a>
+                <button @click="refreshAll()" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">
+                    <i class="fas fa-sync-alt mr-2"></i>Refresh All
+                </button>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Scheduler Status -->
+            <div class="bg-white rounded-lg shadow-md p-6" :class="systemStatus.scheduler_alive ? 'border-l-4 border-green-500' : 'border-l-4 border-red-500'">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-700">Scheduler</h3>
+                        <p x-text="systemStatus.scheduler_alive ? 'Running' : 'Stopped'"
+                           :class="systemStatus.scheduler_alive ? 'text-green-600' : 'text-red-600'"
+                           class="text-sm"></p>
+                    </div>
+                    <i class="fas fa-cog text-2xl text-gray-400"></i>
+                </div>
+            </div>
+
+            <!-- Videos Processed -->
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-700">Videos Processed</h3>
+                        <p x-text="systemStatus.video_count" class="text-2xl font-bold text-blue-600"></p>
+                    </div>
+                    <i class="fas fa-video text-2xl text-gray-400"></i>
+                </div>
+            </div>
+
+            <!-- Scheduled Posts -->
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-700">Scheduled Posts</h3>
+                        <p x-text="Object.values(systemStatus.post_status_counts).reduce((a, b) => a + b, 0)"
+                           class="text-2xl font-bold text-purple-600"></p>
+                    </div>
+                    <i class="fas fa-clock text-2xl text-gray-400"></i>
+                </div>
+            </div>
+
+            <!-- Current Time -->
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-700">Server Time (UTC)</h3>
+                        <p x-text="formatDateTime(systemStatus.current_time_utc)" class="text-sm text-yellow-600"></p>
+                    </div>
+                    <i class="fas fa-clock text-2xl text-gray-400"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Post Status Breakdown -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Post Status Breakdown</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <template x-for="[status, count] in Object.entries(systemStatus.post_status_counts)" :key="status">
+                    <div class="text-center p-4 rounded-lg" :class="getStatusColor(status)">
+                        <div class="text-2xl font-bold" x-text="count"></div>
+                        <div class="text-sm capitalize" x-text="status"></div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Scheduled Posts Table -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Scheduled Posts</h2>
+                <div class="flex space-x-2">
+                    <button @click="loadScheduledPosts()" class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-sm">
+                        <i class="fas fa-sync-alt mr-1"></i>Refresh
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Platform</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Video ID</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Schedule Time (UTC)</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        <template x-for="post in scheduledPosts" :key="post.id">
+                            <tr>
+                                <td class="px-4 py-2 text-sm" x-text="post.id"></td>
+                                <td class="px-4 py-2 text-sm">
+                                    <span class="px-2 py-1 rounded-full text-xs font-medium"
+                                          :class="getPlatformBadgeClass(post.platform)"
+                                          x-text="post.platform"></span>
+                                </td>
+                                <td class="px-4 py-2 text-sm font-mono" x-text="post.video_id"></td>
+                                <td class="px-4 py-2 text-sm" x-text="formatDateTime(post.schedule_time_utc)"></td>
+                                <td class="px-4 py-2 text-sm">
+                                    <span class="px-2 py-1 rounded-full text-xs font-medium"
+                                          :class="getStatusBadgeClass(post.status)"
+                                          x-text="post.status"></span>
+                                </td>
+                                <td class="px-4 py-2 text-sm">
+                                    <div class="flex space-x-2">
+                                        <button @click="runPostNow(post.id)"
+                                                x-show="post.status === 'scheduled'"
+                                                class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600">
+                                            Run Now
+                                        </button>
+                                        <button @click="deletePost(post.id)"
+                                                class="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600">
+                                            Delete
+                                        </button>
+                                        <button @click="showPostDetails(post)"
+                                                class="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">
+                                            Details
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
+                        <tr x-show="scheduledPosts.length === 0">
+                            <td colspan="6" class="px-4 py-4 text-center text-gray-500">
+                                No scheduled posts found
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Video Data Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Video Data</h2>
+                <button @click="loadVideoData()" class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-sm">
+                    <i class="fas fa-sync-alt mr-1"></i>Refresh
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <template x-for="[videoId, videoInfo] in Object.entries(videoData)" :key="videoId">
+                    <div class="border rounded-lg p-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-semibold text-gray-800 truncate" x-text="videoInfo.details.title"></h3>
+                            <button @click="deleteVideo(videoId)" class="text-red-500 hover:text-red-700">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2" x-text="videoInfo.details.uploader"></p>
+                        <div class="text-xs text-gray-500 space-y-1">
+                            <div>Duration: <span x-text="formatDuration(videoInfo.details.duration)"></span></div>
+                            <div>Views: <span x-text="formatViews(videoInfo.details.view_count)"></span></div>
+                            <div>Transcript: <span x-text="videoInfo.transcript.length + ' chars'"></span></div>
+                            <div>Summaries: <span x-text="Object.keys(videoInfo.summaries || {}).length"></span></div>
+                        </div>
+                    </div>
+                </template>
+                <div x-show="Object.keys(videoData).length === 0" class="col-span-full text-center text-gray-500 py-8">
+                    No video data found
+                </div>
+            </div>
+        </div>
+
+        <!-- Post Details Modal -->
+        <div x-show="showDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-gray-800">Post Details</h3>
+                        <button @click="showDetailsModal = false" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <div x-show="selectedPost" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">ID</label>
+                                <p x-text="selectedPost.id" class="text-sm text-gray-900"></p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Platform</label>
+                                <p x-text="selectedPost.platform" class="text-sm text-gray-900"></p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Status</label>
+                                <p x-text="selectedPost.status" class="text-sm text-gray-900"></p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Attempts</label>
+                                <p x-text="selectedPost.attempt_count" class="text-sm text-gray-900"></p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Schedule Time (UTC)</label>
+                            <p x-text="formatDateTime(selectedPost.schedule_time_utc)" class="text-sm text-gray-900"></p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Created At</label>
+                            <p x-text="formatDateTime(selectedPost.created_at)" class="text-sm text-gray-900"></p>
+                        </div>
+
+                        <div x-show="selectedPost.last_result">
+                            <label class="block text-sm font-medium text-gray-700">Last Result</label>
+                            <pre class="text-xs bg-gray-100 p-2 rounded overflow-x-auto"
+                                 x-text="selectedPost.last_result"></pre>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div x-show="loading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-6 flex items-center">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load the admin JavaScript -->
+    <script src="/static/admin.js"></script>
+</body>
+</html>
