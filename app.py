@@ -843,6 +843,9 @@ scheduler_thread = threading.Thread(target=scheduled_poster_worker, daemon=True)
 scheduler_thread.start()
 logger.info("✅ Scheduler thread started and running")
 
+
+
+
 # -------------------------------
 # Flask app
 # -------------------------------
